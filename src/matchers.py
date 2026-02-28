@@ -53,14 +53,14 @@ class BFMatcher(BaseMatcher):
 class FLANNMatcher(BaseMatcher):
     def create_matcher(self, method):
         if method == "orb":
-            FLANN_INDEX_LSH = 6
-            index_params = dict(algorithm=FLANN_INDEX_LSH,
+            flann_index_lsh = 6
+            index_params = dict(algorithm=flann_index_lsh,
                                 table_number=6,
                                 key_size=12,
                                 multi_probe_level=1)
         else:
-            FLANN_INDEX_KDTREE = 1
-            index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
+            flann_index_kdtree = 1
+            index_params = dict(algorithm=flann_index_kdtree, trees=5)
 
         search_params = dict(checks=50)
 
@@ -82,12 +82,12 @@ class FLANNMatcher(BaseMatcher):
                 kp2, des1, des2, method):
         flann = self.create_matcher(method)
         matches = flann.knnMatch(des1, des2, k=2)
-        matchesMask = [[0, 0] for i in range(len(matches))]
+        matches_mask = [[0, 0] for i in range(len(matches))]
         for i, (m, n) in enumerate(matches):
             if m.distance < 0.7 * n.distance:
-                matchesMask[i] = [1, 0]
+                matches_mask[i] = [1, 0]
 
-        draw_params = dict(matchesMask=matchesMask,
+        draw_params = dict(matchesMask=matches_mask,
                            flags=cv.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 
         res = cv.drawMatchesKnn(img1, kp1, img2, kp2, matches, None, **draw_params)

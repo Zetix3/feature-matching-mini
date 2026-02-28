@@ -1,8 +1,8 @@
-import argparse
-import cv2 as cv
-from pathlib import Path
 import sys
+import argparse
+from pathlib import Path
 import logging
+import cv2 as cv
 from descriptors import Descriptors
 from matchers import Matchers
 
@@ -59,7 +59,7 @@ def main():
         kp1, des1, kp2, des2 = method_instance.apply_method(image1, image2, args.method)
         matcher_instance = Matchers()
         result = matcher_instance.apply_matcher(image1, image2, kp1,
-                                                kp2, des1, des2, args.method, args.matcher, args.knn)
+                                            kp2, des1, des2, args.method, args.matcher, args.knn)
         cv.imshow("image", result)
         cv.waitKey(0)
         cv.destroyAllWindows()
@@ -69,3 +69,4 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main() or 0)
+    

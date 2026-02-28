@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import cv2 as cv
-from matchers import Matchers
+
 
 class BaseDescriptors(ABC):
     def __init__(self):
