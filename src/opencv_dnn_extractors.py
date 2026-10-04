@@ -3,6 +3,8 @@ import numpy as np
 
 from src.descriptors import Descriptor
 from src.detectors import Detector
+
+from src.backend.io_adapter_base import IOAdapter
 from src.backend.inference_api_base import InferenceAPI
 from src.backend.model_loader_base import ModelLoader
 
@@ -20,8 +22,14 @@ class OpenCVDNNFeatureExtractors(Detector, Descriptor, register=False):
 
         self._loader = ModelLoader.create(backend=loader_name, model_name=extractor_name, config=config, logger=logger)
         self._model = self._loader.load()
+        self._io_adapter = IOAdapter.create(backend=loader_name, model_name=extractor_name, config=config,
+                                            logger=logger)
         self._inference = InferenceAPI.create(backend=loader_name, logger=logger, model_name=extractor_name,
                                               model=self._model, config=config)
+
+        self._nfeatures = config.get('nfeatures', 4096)
+        self._threshold = config.get('threshold', 0.005)
+
 
     @property
     def default_norm(self):
@@ -34,12 +42,30 @@ class OpenCVDNNFeatureExtractors(Detector, Descriptor, register=False):
 
         self._logger.info(f"Running inference with {self._detector_name}")
 
-        output = self._inference.run(img)
-        kp = output.get('keypoints', np.array([]))
-        des = output.get('descriptors', np.array([]))
-        self._logger.info(f"{self.extractor_name} found {len(kp)} points")
+        inputs = self._io_adapter.preprocess({'image': img})
+        outputs = self._inference.run(inputs)
+        outputs = self._io_adapter.postprocess(outputs)
 
-        OpenCVDNNFeatureExtractors._extracted_data = {'kp': kp, 'des': des, 'img_shape': img.shape}
+        kp = outputs.get('kp', np.array([]))
+        des = outputs.get('des', np.array([]))
+        sc = outputs.get('sc', np.array([]))
+
+        mask = sc > self._threshold
+        kp = kp[mask]
+        des = des[mask]
+        sc = sc[mask]
+
+        if self._nfeatures is not None and len(kp) > self._nfeatures:
+            indices = np.argsort(sc)[::-1][:self._nfeatures]
+            kp = kp[indices]
+            des = des[indices]
+
+        if len(kp) > 0:
+            self._logger.info(f"{self.extractor_name} found {len(kp)} points")
+        else:
+            self._logger.warning(f"{self.extractor_name} found 0 points")
+
+        OpenCVDNNFeatureExtractors._extracted_data = {'kp': kp, 'des': des, 'sc': sc}
         return OpenCVDNNFeatureExtractors._extracted_data
 
     def detect(self, img):

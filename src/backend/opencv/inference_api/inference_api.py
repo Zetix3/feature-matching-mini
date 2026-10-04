@@ -1,5 +1,6 @@
 from src.backend.inference_api_base import InferenceAPI
 
+@InferenceAPI.register("opencv")
 class OpenCVInferenceAPI(InferenceAPI):
     def __init__(self, logger, model_name, model, config=None):
         if config is None:

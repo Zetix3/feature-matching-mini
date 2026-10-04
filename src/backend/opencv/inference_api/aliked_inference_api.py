@@ -5,9 +5,10 @@ from src.backend.opencv.inference_api.inference_api import OpenCVInferenceAPI
 class AlikedOpenCVInferenceAPI(OpenCVInferenceAPI):
     def run(self, img):
         try:
-            kp, des = self._model.detectAndCompute(img, None)
-            return {'kp': kp, 'des': des, 'img_shape': img.shape}
+            output_names = ["keypoints", "descriptors", "scores"]
+            outputs = self._model.forward(output_names)
+            return {'kp': outputs[0], 'des': outputs[1], 'sc': outputs[2]}
 
         except Exception as e:
             self._logger.error(f"Aliked inference error: {e}")
-            return {'keypoints': (), 'descriptors': ()}
+            return {'kp': (), 'des': ()}
