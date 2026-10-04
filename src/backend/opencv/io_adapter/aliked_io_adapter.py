@@ -13,9 +13,9 @@ class AlikedOpenCVIOAdapter(OpenCVIOAdapter):
         self._model.setInput(blob)
 
     def postprocess(self, outputs):
-        keypoints = outputs.get('kp')
-        descriptors = outputs.get('des')
-        scores = outputs.get('sc')
+        keypoints = outputs[0]
+        descriptors = outputs[1]
+        scores = outputs[2]
         keypoints_np = keypoints.astype(np.float32)
         if keypoints_np.ndim == 3:
             keypoints_np = keypoints_np.reshape(-1, 2)
