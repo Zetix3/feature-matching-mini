@@ -4,10 +4,12 @@ from src.backend.inference_api_base import InferenceAPI
 @InferenceAPI.register("opencv")
 @InferenceAPI.register("aliked_opencv")
 @InferenceAPI.register("disk_opencv")
+@InferenceAPI.register("lightglue_opencv")
 class OpenCVInferenceAPI(InferenceAPI):
     _OUTPUT_NAMES = {
         'aliked_opencv': ["keypoints", "descriptors", "scores"],
-        'disk_opencv': ["keypoints", "descriptors", "scores"]
+        'disk_opencv': ["keypoints", "descriptors", "scores"],
+        'lightglue_opencv': ["matches0", "mscores0"]
     }
 
     def __init__(self, logger, model_name, model, config=None):
@@ -16,14 +18,9 @@ class OpenCVInferenceAPI(InferenceAPI):
         super().__init__(logger, model_name, model, config)
 
         self._model_name = model_name
-        self.output_names = self._get_out_names(model_name)
-        self._mode = config.get('mode', 'simple')
+        self.output_names = self._OUTPUT_NAMES.get(model_name)
 
-    def _get_out_names(self, model_name):
-        output_names = self._OUTPUT_NAMES.get(model_name)
-        return output_names
-
-    def run(self, inputs):
+    def run(self, inputs=None):
         try:
             outputs = self._model.forward(self.output_names)
             return outputs

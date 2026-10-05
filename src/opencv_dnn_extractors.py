@@ -42,8 +42,8 @@ class OpenCVDNNFeatureExtractors(Detector, Descriptor, register=False):
 
         self._logger.info(f"Running inference with {self._detector_name}")
 
-        inputs = self._io_adapter.preprocess({'image': img})
-        outputs = self._inference.run(inputs)
+        self._io_adapter.preprocess({'image': img})
+        outputs = self._inference.run()
         outputs = self._io_adapter.postprocess(outputs)
 
         kp = outputs.get('kp', np.array([]))
