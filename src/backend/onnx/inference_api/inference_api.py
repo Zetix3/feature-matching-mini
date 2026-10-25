@@ -6,13 +6,18 @@ from src.backend.inference_api_base import InferenceAPI
 @InferenceAPI.register("disk_onnx")
 @InferenceAPI.register("lightglue_onnx")
 class OnnxInferenceAPI(InferenceAPI):
+    _OUTPUT_NAMES = {
+        'aliked_onnx': ["keypoints", "descriptors", "scores"],
+        'disk_onnx': ["keypoints", "descriptors", "scores"],
+        'lightglue_onnx': ["matches0", "mscores0"]
+    }
     def __init__(self, logger, model_name, model, config=None):
         if config is None:
             config = {}
         super().__init__(logger, model_name, model, config)
 
         self._model_name = model_name
-        self.output_names = [output_node.name for output_node in self._model_wrapper.get_outputs()]
+        self.output_names = self._OUTPUT_NAMES.get(model_name)
 
     def run(self, inputs=None):
         try:

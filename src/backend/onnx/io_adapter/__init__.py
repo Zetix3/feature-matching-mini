@@ -1,3 +1,3 @@
-from .aliked_loader import AlikedOnnxModelLoader  # noqa: F401
-from .disk_loader import DiskOnnxModelLoader  # noqa: F401
-from .lightglue_loader import LightGlueOnnxModelLoader  # noqa: F401
+from .aliked_io_adapter import AlikedOnnxIOAdapter  # noqa: F401
+from .disk_io_adapter import DiskOnnxIOAdapter  # noqa: F401
+from .lightglue_io_adapter import LightGlueOnnxIOAdapter  # noqa: F401

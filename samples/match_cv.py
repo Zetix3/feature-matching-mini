@@ -15,6 +15,9 @@ from src.matchers import Matcher, OpenCVMatcher  # noqa: E402, F401
 import src.backend.opencv.model_loader  # noqa: E402, F401
 import src.backend.opencv.inference_api  # noqa: E402, F401
 import src.backend.opencv.io_adapter  # noqa: E402, F401
+import src.backend.onnx.model_loader  # noqa: E402, F401
+import src.backend.onnx.inference_api  # noqa: E402, F401
+import src.backend.onnx.io_adapter  # noqa: E402, F401
 
 
 logging.basicConfig(level=logging.INFO, format='[ %(levelname)s ] %(message)s')

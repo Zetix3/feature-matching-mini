@@ -10,12 +10,12 @@ DNN_MATCHERS = {'lightglue', 'superglue', 'loftr', 'roma'}
 DNN_PIPELINES = {'loftr', 'roma'}
 
 OPENCV_DETECTORS = {'sift', 'orb', 'fast', 'akaze', 'brisk', 'kaze', 'gftt', 'mser', 'agast', 'blob', 'star',
-                    'harrislaplace', 'msd', 'disk_opencv', 'aliked_opencv'}
+                    'harrislaplace', 'msd', 'disk_opencv', 'aliked_opencv', 'disk_onnx', 'aliked_onnx'}
 
 OPENCV_DESCRIPTORS = {'sift', 'orb', 'akaze', 'brisk', 'kaze', 'brief', 'freak', 'daisy', 'latch', 'beblid', 'teblid',
-                      'vgg', 'boostdesc', 'disk_opencv', 'aliked_opencv', 'tfeat', 'hardnet'}
+                      'vgg', 'boostdesc', 'disk_opencv', 'aliked_opencv', 'tfeat', 'hardnet', 'disk_onnx', 'aliked_onnx'}
 
-OPENCV_MATCHERS = {'bf', 'flann', 'lightglue_opencv'}
+OPENCV_MATCHERS = {'bf', 'flann', 'lightglue_opencv', 'lightglue_onnx'}
 OPENCV_MATCHERS_MODE = {'simple', 'knn'}
 
 
@@ -68,6 +68,8 @@ DETECTOR_DESCRIPTOR_COMPATIBILITY = {
     'r2d2': ['r2d2'],
     'loftr': ['loftr'],
     'roma': ['roma'],
+    'aliked_onnx': ['aliked_onnx'],
+    'disk_onnx': ['disk_onnx'],
 }
 
 DESCRIPTOR_MATCHER_COMPATIBILITY = {
@@ -100,4 +102,6 @@ DESCRIPTOR_MATCHER_COMPATIBILITY = {
     'r2d2': ['bf', 'flann'],
     'loftr': ['loftr'],
     'roma': ['roma'],
+    'aliked_onnx': ['bf', 'flann', 'lightglue_onnx'],
+    'disk_onnx': ['bf', 'flann', 'lightglue_onnx'],
 }
