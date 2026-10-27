@@ -82,7 +82,7 @@ class OnnxSessionConfiguration:
             'CPUExecutionProvider': {},
         }
 
-        config_providers_options = self._config.get('providers_options', [])
+        config_providers_options = self._config.get('provider_option', [])
         providers_options = default_providers_options.copy()
         config_providers_options = self._parse_provider_options(config_providers_options)
         for prov, opts in config_providers_options.items():
