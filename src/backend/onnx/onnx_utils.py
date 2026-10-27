@@ -34,6 +34,33 @@ class OnnxSessionConfiguration:
 
         return sess_options
 
+    def _parse_provider_options(self, option_strings):
+        nested_dict = {}
+        if not option_strings:
+            return nested_dict
+
+        for item in option_strings:
+            if '=' not in item:
+                continue
+            key, val = item.split('=', 1)
+
+            if val.isdigit():
+                val = int(val)
+            elif val.lower() == 'true':
+                val = True
+            elif val.lower() == 'false':
+                val = False
+
+            parts = key.split('.')
+            current = nested_dict
+            for part in parts[:-1]:
+                if part not in current:
+                    current[part] = {}
+                current = current[part]
+            current[parts[-1]] = val
+
+        return nested_dict
+
     def get_providers_with_options(self):
         device = self._config.get('device', 'cpu')
 
@@ -55,9 +82,9 @@ class OnnxSessionConfiguration:
             'CPUExecutionProvider': {},
         }
 
-        config_providers_options = self._config.get('providers_options', {})
-
+        config_providers_options = self._config.get('providers_options', [])
         providers_options = default_providers_options.copy()
+        config_providers_options = self._parse_provider_options(config_providers_options)
         for prov, opts in config_providers_options.items():
             if prov in providers_options:
                 providers_options[prov].update(opts)

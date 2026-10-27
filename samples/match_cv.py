@@ -29,7 +29,6 @@ def parser():
         description="Matching points in two images using OpenCV algorithms",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    available_devices = ['cpu', 'cuda', 'mps']
 
     arg_parser.add_argument('-det', '--detector', type=str, default='sift',
                             choices=ALL_DETECTORS, help='Detector algorithm')
@@ -44,9 +43,19 @@ def parser():
                             help='Path to the second image')
 
     arg_parser.add_argument('-d', '--device', type=str, default=None,
-                            choices=available_devices, help='The device on which the script will be run')
+                            help='The device on which the script will be run')
     arg_parser.add_argument('-s', '--save', type=Path, default=None,
                             help='Path to save result image')
+    arg_parser.add_argument('-po', '--provider-option', action='append', default=[],
+                           help='ONNX provider options in format Provider.Key=Value '
+                                '(e.g., -po CUDAExecutionProvider.device_id=0)')
+    arg_parser.add_argument('--intra-op-threads', type=int, default=None,
+                            help='Intra-op threads number for ONNX Runtime')
+    arg_parser.add_argument('--inter-op-threads', type=int, default=None,
+                            help='Inter-op threads number for ONNX Runtime')
+    arg_parser.add_argument('--execution-mode', type=str, default=None,
+                            choices=['ORT_SEQUENTIAL', 'ORT_PARALLEL'],
+                            help='Execution mode for ONNX Runtime')
 
     det_group = arg_parser.add_argument_group('Detector config')
     det_group.add_argument('-detb', '--det-backend', type=str, default=None, help='Backend for detector')
