@@ -7,9 +7,9 @@ from src.backend.inference_api_base import InferenceAPI
 @InferenceAPI.register("lightglue_onnx")
 class OnnxInferenceAPI(InferenceAPI):
     _OUTPUT_NAMES = {
-        'aliked_onnx': ["keypoints", "descriptors", "scores"],
-        'disk_onnx': ["keypoints", "descriptors", "scores"],
-        'lightglue_onnx': ["matches0", "mscores0"]
+        'aliked': ["keypoints", "descriptors", "scores"],
+        'disk': ["keypoints", "descriptors", "scores"],
+        'lightglue': ["matches0", "mscores0"],
     }
     def __init__(self, logger, model_name, model, config=None):
         if config is None:

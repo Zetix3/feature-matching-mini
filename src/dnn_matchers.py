@@ -16,10 +16,13 @@ class DNNMatcher(Matcher):
     def __init__(self, matcher_name, logger, config=None, descriptor_class=None):
         if config is None:
             config = {}
+        else:
+            config = config.copy()
 
         Matcher.__init__(self, matcher_name, logger, config, descriptor_class)
 
         backend = config.pop('backend', 'torch').lower()
+        self._backend = backend
         if 'descriptor_class' not in config:
             config['descriptor_class'] = descriptor_class
 
@@ -43,6 +46,9 @@ class DNNMatcher(Matcher):
         pass
 
     def match(self, features0, features1):
+        self._logger.info(
+            f"Running inference with {self._matcher_name} on {self._backend} backend"
+        )
         inputs = {"features0": features0, "features1": features1, "descriptor_name": self._descriptor_class,
                   **DNNMatcher._model_components}
         inputs = DNNMatcher._io_adapter.preprocess(inputs)

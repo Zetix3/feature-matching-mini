@@ -3,14 +3,17 @@ from src.matchers import Matcher
 from src.backend.io_adapter_base import IOAdapter
 from src.backend.inference_api_base import InferenceAPI
 from src.backend.model_wrapper_base import ModelWrapper
+from src.backend.onnx.model_loader.model_loader import ONNX_MATCHER_MODELS
 
 
 class LightGlueOnnxMatcher(Matcher):
+    _MATCHER_CLASSES = {'lightglue': None}
+
     def __init__(self, matcher_name, logger, config, descriptor):
         super().__init__(matcher_name, logger, config, descriptor)
 
-        if descriptor._descriptor_name == 'aliked_onnx' and config.get('lightglue_model_path') is None:
-            config['lightglue_model_path'] = "models/lightglue_for_aliked.onnx"
+        if descriptor._descriptor_name == 'aliked' and config.get('lightglue_model_path') is None:
+            config['lightglue_model_path'] = f"models/{ONNX_MATCHER_MODELS['aliked']}"
 
         self._loader = ModelWrapper.create(backend="onnx", model_name=matcher_name, config=config, logger=logger)
         self._model = self._init_matcher()
@@ -23,6 +26,7 @@ class LightGlueOnnxMatcher(Matcher):
         return self._loader.load()
 
     def match(self, features1, features2):
+        self._logger.info(f"Running inference with {self._matcher_name} on onnx backend")
         inputs = self._io_adapter.preprocess({'features1': features1, 'features2': features2})
         if inputs is None:
             return {'matches': [], 'scores': []}
