@@ -32,7 +32,6 @@ class ModelWrapper(ABC):
     def create(cls, backend, model_name, model_path=None, config=None, logger=None):
         loader_name = f"{model_name.lower()}_{backend.lower()}"
         if loader_name not in cls._METHODS:
-            print(loader_name)
             raise ValueError(f"Model loader backend '{backend}' not found. "
                              f"Available: {list(cls._METHODS.keys())}")
 
