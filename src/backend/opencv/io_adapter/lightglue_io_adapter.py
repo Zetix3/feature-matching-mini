@@ -64,11 +64,6 @@ class LightGlueOpenCVIOAdapter(OpenCVIOAdapter):
             'desc0': desc0.astype(np.float32),
             'desc1': desc1.astype(np.float32)
         }
-        if (not np.isfinite(kpts0).all() or not np.isfinite(desc0).all()
-                or not np.isfinite(kpts1).all() or not np.isfinite(desc1).all()):
-            self._logger.error("LightGlue inputs contain NaN or Inf! Aborting inference to prevent crash.")
-            return None
-
         for name, value in input_layers.items():
             self._model.setInput(value, name=name)
 
@@ -99,9 +94,6 @@ class LightGlueOpenCVIOAdapter(OpenCVIOAdapter):
             score = float(scores[i]) if scores is not None and i < len(scores) else 1.0
             distance = 1.0 - score if score <= 1.0 else 0.0
             dmatches.append(cv.DMatch(_queryIdx=query_idx, _trainIdx=target_idx, _imgIdx=0, _distance=distance))
-
-        tmp_list = np.array(dmatches)
-        print(f"DEBUG LAYER matches: shape={tmp_list.shape}")
 
         result = {'matches': dmatches, 'scores': scores}
         return result
