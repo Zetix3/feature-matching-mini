@@ -58,7 +58,7 @@ def run_benchmark(script_name, combo, img1, img2, device='cpu', iterations=10):
     des = combo['descriptor']
     desb = combo['descriptor_backend']
     mat = combo['matcher']
-    matb =  combo['matcher_backend']
+    matb = combo['matcher_backend']
     cmd = [
         sys.executable, '-m', script_name,
         '-det', det,

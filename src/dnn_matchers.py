@@ -37,17 +37,17 @@ class DNNMatcher(Matcher):
             DNNMatcher._model_wrapper = ModelWrapper.create(backend=backend, model_name=matcher_name,
                                                             config=config, logger=logger)
             DNNMatcher._model_components = DNNMatcher._model_wrapper.load()
-            DNNMatcher.model_wrapper_loaded = DNNMatcher._model_components.get('model') \
+            DNNMatcher.model_wrap_loaded = DNNMatcher._model_components.get('model') \
                 if backend in ['opencv', 'onnx'] else DNNMatcher._model_wrapper
 
         if DNNMatcher._io_adapter is None:
             DNNMatcher._io_adapter = IOAdapter.create(backend=backend, model_name=matcher_name,
-                                                      model_wrapper=DNNMatcher.model_wrapper_loaded,
+                                                      model_wrapper=DNNMatcher.model_wrap_loaded,
                                                       config=config, logger=logger)
 
         if DNNMatcher._inference is None:
             DNNMatcher._inference = InferenceAPI.create(backend=backend, logger=logger, model_name=matcher_name,
-                                                        model_wrapper=DNNMatcher.model_wrapper_loaded, config=config)
+                                                        model_wrapper=DNNMatcher.model_wrap_loaded, config=config)
 
     def _init_matcher(self):
         pass

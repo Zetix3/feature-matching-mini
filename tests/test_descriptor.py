@@ -16,7 +16,6 @@ import src.backend.onnx.inference_api  # noqa: F401
 import src.backend.onnx.io_adapter  # noqa: F401
 from src.detectors import Detector
 from src.descriptors import Descriptor, SIFTDescriptor, OpenCVDescriptor
-from src.feature_matcher import FeatureMatcherCV2
 
 
 @pytest.fixture

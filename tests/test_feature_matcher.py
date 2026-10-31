@@ -5,11 +5,10 @@ from pathlib import Path
 from unittest.mock import MagicMock
 from logging import Logger
 
-from src.backend.model_wrapper_base import ModelWrapper
 from src.feature_matcher import FeatureMatcherCV2
-from src.algorithms import (ALL_DESCRIPTORS, ALL_MATCHERS, TORCH_MATCHERS, DETECTOR_DESCRIPTOR_COMPATIBILITY,
+from src.algorithms import (TORCH_MATCHERS, DETECTOR_DESCRIPTOR_COMPATIBILITY,
                             DESCRIPTOR_MATCHER_COMPATIBILITY, get_compatible_descriptors,
-                            get_compatible_matchers, get_default_backend)
+                            get_compatible_matchers)
 import src.backend.opencv.model_loader  # noqa: F401
 import src.backend.opencv.inference_api  # noqa: F401
 import src.backend.opencv.io_adapter  # noqa: F401
@@ -147,7 +146,7 @@ class TestFeatureMatcherCompatibility:
                                 if matcher == 'superglue':
                                     continue
                                 modes = [None] if matcher in TORCH_MATCHERS or 'opencv' in match_backend else ['simple',
-                                                                                                                'knn']
+                                                                                                               'knn']
                                 for mode in modes:
                                     valid_combinations.append((
                                         detector, det_backend,

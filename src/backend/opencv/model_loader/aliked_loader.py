@@ -5,6 +5,7 @@ from src.backend.opencv.model_loader.model_loader import (
     OpenCVModelLoader,
 )
 
+
 @ModelWrapper.register("aliked_opencv")
 class AlikedOpenCVModelLoader(OpenCVModelLoader):
     def load(self):

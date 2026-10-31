@@ -3,6 +3,7 @@ from src.backend.model_wrapper_base import ModelWrapper
 from src.backend.onnx.model_loader.model_loader import OnnxModelLoader
 from src.backend.onnx.onnx_utils import OnnxSessionConfiguration
 
+
 @ModelWrapper.register("disk_onnx")
 class DiskOnnxModelLoader(OnnxModelLoader):
     def load(self):

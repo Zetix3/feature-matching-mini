@@ -131,7 +131,6 @@ def performance_tests_parser():
         description="Feature matching staged performance test",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-
     arg_parser.add_argument('-det', '--detector', type=str, default='sift',
                             choices=ALL_DETECTORS, help='Detector algorithm')
     arg_parser.add_argument('-des', '--descriptor', type=str, default='sift',

@@ -11,6 +11,7 @@ class OnnxInferenceAPI(InferenceAPI):
         'disk': ["keypoints", "descriptors", "scores"],
         'lightglue': ["matches0", "mscores0"],
     }
+
     def __init__(self, logger, model_name, model, config=None):
         if config is None:
             config = {}

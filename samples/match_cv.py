@@ -29,7 +29,6 @@ def parser():
         description="Matching points in two images using OpenCV algorithms",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-
     arg_parser.add_argument('-det', '--detector', type=str, default='sift',
                             choices=ALL_DETECTORS, help='Detector algorithm')
     arg_parser.add_argument('-des', '--descriptor', type=str, default='sift',
@@ -47,7 +46,7 @@ def parser():
     arg_parser.add_argument('-s', '--save', type=Path, default=None,
                             help='Path to save result image')
     arg_parser.add_argument('-po', '--provider-option', action='append', default=[],
-                           help='ONNX provider options in format Provider.Key=Value '
+                            help='ONNX provider options in format Provider.Key=Value '
                                 '(e.g., -po CUDAExecutionProvider.device_id=0)')
     arg_parser.add_argument('--intra-op-threads', type=int, default=None,
                             help='Intra-op threads number for ONNX Runtime')

@@ -5,6 +5,7 @@ from src.backend.opencv.model_loader.model_loader import (
     OpenCVModelLoader,
 )
 
+
 @ModelWrapper.register("lightglue_opencv")
 class LightGlueOpenCVModelLoader(OpenCVModelLoader):
     def load(self):

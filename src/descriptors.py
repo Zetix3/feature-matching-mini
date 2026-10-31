@@ -1,7 +1,7 @@
 import cv2 as cv
 from abc import ABC, abstractmethod
 
-from src.algorithms import  DNN_PIPELINES, DNN_DESCRIPTORS
+from src.algorithms import DNN_PIPELINES, DNN_DESCRIPTORS
 
 
 class Descriptor(ABC):
@@ -34,7 +34,6 @@ class Descriptor(ABC):
             config = {}
 
         descriptor_name = descriptor_name.lower()
-        backend = config.get('backend', '').lower()
 
         if descriptor_name in DNN_PIPELINES:
             return Descriptor._METHODS["dnnpipeline"](descriptor_name, logger, config)
@@ -42,7 +41,6 @@ class Descriptor(ABC):
         is_patch_descriptor = descriptor_name in {'tfeat', 'hardnet'}
         if (descriptor_name in DNN_DESCRIPTORS and not is_patch_descriptor):
             return Descriptor._METHODS["dnnfeatureextractors"](descriptor_name, logger, config)
-
 
         descriptor_class_name = descriptor_name.lower()
         if descriptor_class_name not in Descriptor._METHODS:
