@@ -31,7 +31,7 @@ def test_load_default_path_success(mock_logger):
         mock_session_instance = MagicMock()
         mock_inference_session.return_value = mock_session_instance
 
-        model = loader.load()
+        model = loader.load()['model']
 
         assert model == mock_session_instance
         mock_logger.info.assert_any_call(

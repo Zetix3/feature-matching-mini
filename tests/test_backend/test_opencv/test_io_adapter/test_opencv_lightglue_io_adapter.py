@@ -26,10 +26,10 @@ def adapter(mock_model):
 def test_normalize_keypoints_disk(adapter):
     keypoints = np.array([[100.0, 200.0], [500.0, 400.0]], dtype=np.float32)
     img_shape = (1000, 2000, 3)
-
-    normalized = adapter._normalize_keypoints(keypoints, img_shape, extractor_name="disk_opencv")
-
     height, width = img_shape[:2]
+
+    normalized = adapter._normalize_keypoints(keypoints, height, width, extractor_name="disk_opencv")
+
     expected = np.array([
         [100.0 / (width - 1), 200.0 / (height - 1)],
         [500.0 / (width - 1), 400.0 / (height - 1)]
@@ -41,10 +41,10 @@ def test_normalize_keypoints_disk(adapter):
 def test_normalize_keypoints_aliked(adapter):
     keypoints = np.array([[0.0, 0.0], [2000.0, 1000.0]], dtype=np.float32)
     img_shape = (1000, 2000, 3)
-
-    normalized = adapter._normalize_keypoints(keypoints, img_shape, extractor_name="aliked_opencv")
-
     height, width = img_shape[:2]
+
+    normalized = adapter._normalize_keypoints(keypoints, height, width, extractor_name="aliked_opencv")
+
     expected = np.array([
         [2.0 * 0.0 / width - 1.0, 2.0 * 0.0 / height - 1.0],
         [2.0 * 2000.0 / width - 1.0, 2.0 * 1000.0 / height - 1.0]
@@ -58,13 +58,15 @@ def test_preprocess(adapter, mock_model):
         'features1': {
             'keypoints': np.array([[0.0, 0.0]], dtype=np.float32),
             'descriptors': np.random.rand(1, 128).astype(np.float32),
-            'img_shape': (100, 100, 3),
+            'height': 100,
+            'width': 100,
             'extractor_name': 'disk_opencv'
         },
         'features2': {
             'keypoints': np.array([[10.0, 10.0]], dtype=np.float32),
             'descriptors': np.random.rand(1, 128).astype(np.float32),
-            'img_shape': (100, 100, 3),
+            'height': 100,
+            'width': 100,
             'extractor_name': 'disk_opencv'
         }
     }

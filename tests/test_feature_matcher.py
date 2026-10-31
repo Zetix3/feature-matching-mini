@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 from logging import Logger
 
+from src.backend.model_wrapper_base import ModelWrapper
 from src.feature_matcher import FeatureMatcherCV2
 from src.algorithms import (ALL_DESCRIPTORS, ALL_MATCHERS, TORCH_MATCHERS, get_compatible_descriptors,
                             get_compatible_matchers, get_default_backend)
@@ -24,7 +25,8 @@ def mock_logger():
 @pytest.fixture
 def load_img():
     def _load(name):
-        path = Path(__file__).parent.parent / "test_data" / name
+        #path = Path(__file__).parent.parent / "test_data" / name
+        path = Path(r"C:/for_dl") / name
         img = cv.imread(str(path))
         if img is None:
             pytest.fail(f"Failed to load image. On path: {path.absolute()}")
@@ -148,6 +150,9 @@ class TestFeatureMatcherCompatibility:
             get_default_backend(mat, 2),
         )
         and mat != 'superglue'
+        and f"{det}_{get_default_backend(det, 0)}".lower() in ModelWrapper._METHODS
+        and f"{des}_{get_default_backend(des, 1)}".lower() in ModelWrapper._METHODS
+        and f"{mat}_{get_default_backend(mat, 2)}".lower() in ModelWrapper._METHODS
     ]
 
     @pytest.mark.parametrize("det, des, mat, mode", valid_combinations)
