@@ -116,7 +116,8 @@ class TestDescriptorCompute:
 
             if is_neural:
                 img = load_img("box.png", input_type='tensor')
-                config = {'device': 'cpu'} if detector_name in ALGORITHMS_CPU_ONLY else {}
+                config = {'device': 'cpu', 'backend': detector_backend} \
+                    if detector_name in ALGORITHMS_CPU_ONLY else {'backend': detector_backend}
                 features = get_kp("box.png", detector_name, input_type='tensor', config=config)
 
                 assert isinstance(features, dict)
