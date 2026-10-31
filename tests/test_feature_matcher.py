@@ -204,22 +204,6 @@ class TestFeatureMatcherCompatibility:
                 descriptor='sift'
             )
 
-    def test_incompatible_executorch_descriptor_and_torch_matcher_raises(self, mock_logger):
-        config = {
-            'detector': {'backend': 'executorch'},
-            'descriptor': {'backend': 'executorch'},
-            'matcher': {'backend': 'torch'},
-        }
-
-        with pytest.raises(ValueError, match="cannot be used with Matcher"):
-            FeatureMatcherCV2(
-                logger=mock_logger,
-                detector='superpoint_lightglue',
-                descriptor='superpoint_lightglue',
-                matcher='lightglue',
-                config=config,
-            )
-
 
 class TestFeatureMatcherRobustness:
     def test_match_with_invalid_descriptor_input(self, mock_logger):

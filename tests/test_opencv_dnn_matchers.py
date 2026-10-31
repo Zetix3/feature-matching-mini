@@ -54,7 +54,7 @@ class TestLightGlueRegistration:
             yield
 
     def test_registered_in_factory(self, mock_logger):
-        extractor = DISKOpenCV("disk", mock_logger, config={})
+        extractor = DISKOpenCV("disk", mock_logger, config={'backend': 'opencv'})
         obj = Matcher.create("lightglue", mock_logger, descriptor_class=extractor, config={'backend': 'opencv'})
         assert isinstance(obj, LightGlueOpenCVMatcher)
         assert "lightglue" in Matcher._METHODS

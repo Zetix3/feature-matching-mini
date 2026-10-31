@@ -17,9 +17,9 @@ def mock_model_wrapper():
 
 @pytest.mark.parametrize("model_name,expected_outputs", [
     ("opencv", None),
-    ("aliked_opencv", ["keypoints", "descriptors", "scores"]),
-    ("disk_opencv", ["keypoints", "descriptors", "scores"]),
-    ("lightglue_opencv", ["matches0", "mscores0"])
+    ("aliked", ["keypoints", "descriptors", "scores"]),
+    ("disk", ["keypoints", "descriptors", "scores"]),
+    ("lightglue", ["matches0", "mscores0"])
 ])
 def test_inference_api_initialization_and_output_names(mock_logger, mock_model_wrapper, model_name, expected_outputs):
     api = OpenCVInferenceAPI(
@@ -36,7 +36,7 @@ def test_inference_api_initialization_and_output_names(mock_logger, mock_model_w
 def test_run_success(mock_logger, mock_model_wrapper):
     api = OpenCVInferenceAPI(
         logger=mock_logger,
-        model_name="aliked_opencv",
+        model_name="aliked",
         model=mock_model_wrapper
     )
 
@@ -53,7 +53,7 @@ def test_run_exception_handling(mock_logger, mock_model_wrapper):
 
     api = OpenCVInferenceAPI(
         logger=mock_logger,
-        model_name="disk_opencv",
+        model_name="disk",
         model=mock_model_wrapper
     )
 
