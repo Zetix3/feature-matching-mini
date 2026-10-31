@@ -47,7 +47,7 @@ def parser():
                             help='Path to save result image')
     arg_parser.add_argument('-po', '--provider-option', action='append', default=[],
                             help='ONNX provider options in format Provider.Key=Value '
-                                '(e.g., -po CUDAExecutionProvider.device_id=0)')
+                                 '(e.g., -po CUDAExecutionProvider.device_id=0)')
     arg_parser.add_argument('--intra-op-threads', type=int, default=None,
                             help='Intra-op threads number for ONNX Runtime')
     arg_parser.add_argument('--inter-op-threads', type=int, default=None,
