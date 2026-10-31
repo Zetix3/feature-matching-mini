@@ -1,7 +1,7 @@
 import cv2 as cv
 from abc import ABC, abstractmethod
 
-from src.algorithms import  DNN_PIPELINES, TORCH_DESCRIPTORS
+from src.algorithms import  DNN_PIPELINES, DNN_DESCRIPTORS
 
 
 class Descriptor(ABC):
@@ -21,7 +21,7 @@ class Descriptor(ABC):
         elif register:
             key = cls.__name__.replace("Descriptor", "").lower()
 
-            for key_ in TORCH_DESCRIPTORS:
+            for key_ in DNN_DESCRIPTORS:
                 if key_.replace("_", "") == key:
                     key = key_
                     break
@@ -40,7 +40,7 @@ class Descriptor(ABC):
             return Descriptor._METHODS["dnnpipeline"](descriptor_name, logger, config)
 
         is_patch_descriptor = descriptor_name in {'tfeat', 'hardnet'}
-        if (descriptor_name in TORCH_DESCRIPTORS and not is_patch_descriptor):
+        if (descriptor_name in DNN_DESCRIPTORS and not is_patch_descriptor):
             return Descriptor._METHODS["dnnfeatureextractors"](descriptor_name, logger, config)
 
 

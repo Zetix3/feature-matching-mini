@@ -19,7 +19,7 @@ class LightGlueOnnxModelLoader(OnnxModelLoader):
                 providers=providers
             )
             self._model = session
-            return self._model
+            return {'model': self._model}
 
         except Exception as e:
             self._logger.error(f"Failed to load ONNX model {self._model_name} from {model_path}: {e}")

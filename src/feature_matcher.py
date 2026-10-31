@@ -10,10 +10,6 @@ from src.matchers import Matcher
 from src.dnn_extractors import DNNFeatureExtractors  # noqa: F401
 from src.dnn_matchers import DNNMatcher  # noqa: F401
 from src.dnn_pipeline import DNNPipeline  # noqa: F401
-from src.opencv_dnn_extractors import ALIKEDOpenCV, DISKOpenCV  # noqa: F401
-from src.opencv_dnn_matchers import LightGlueOpenCVMatcher  # noqa: F401
-from src.onnx_dnn_extractors import ALIKEDOnnx, DISKOnnx  # noqa: F401
-from src.onnx_dnn_matchers import LightGlueOnnxMatcher  # noqa: F401
 from src.hardnet_descriptor import HardNet  # noqa: F401
 from src.tfeat_descriptor import TFeat  # noqa: F401
 

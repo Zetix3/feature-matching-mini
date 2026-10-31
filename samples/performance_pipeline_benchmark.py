@@ -11,10 +11,6 @@ from src.detectors import Detector  # noqa: E402
 from src.descriptors import Descriptor  # noqa: E402
 from src.matchers import Matcher  # noqa: E402
 from samples.performance_profiler import PerformanceProfiler  # noqa: E402
-from src.opencv_dnn_extractors import ALIKEDOpenCV, DISKOpenCV  # noqa: E402, F401
-from src.opencv_dnn_matchers import LightGlueOpenCVMatcher  # noqa: E402, F401
-from src.onnx_dnn_extractors import ALIKEDOnnx, DISKOnnx  # noqa: E402, F401
-from src.onnx_dnn_matchers import LightGlueOnnxMatcher  # noqa: E402, F401
 from src.tfeat_descriptor import TFeat  # noqa: E402, F401
 from src.hardnet_descriptor import HardNet  # noqa: E402, F401
 import src.backend.opencv.model_loader  # noqa: E402, F401
