@@ -7,7 +7,8 @@ from logging import Logger
 
 from src.backend.model_wrapper_base import ModelWrapper
 from src.feature_matcher import FeatureMatcherCV2
-from src.algorithms import (ALL_DESCRIPTORS, ALL_MATCHERS, TORCH_MATCHERS, get_compatible_descriptors,
+from src.algorithms import (ALL_DESCRIPTORS, ALL_MATCHERS, TORCH_MATCHERS, DETECTOR_DESCRIPTOR_COMPATIBILITY,
+                            DESCRIPTOR_MATCHER_COMPATIBILITY, get_compatible_descriptors,
                             get_compatible_matchers, get_default_backend)
 import src.backend.opencv.model_loader  # noqa: F401
 import src.backend.opencv.inference_api  # noqa: F401
@@ -132,36 +133,42 @@ class TestFeatureMatcherMatch:
 
 
 class TestFeatureMatcherCompatibility:
-    valid_combinations = [
-        (det, des, mat, mode)
-        for det in FeatureMatcherCV2._DETECTOR_DESCRIPTOR_COMPATIBILITY
-        for des in ALL_DESCRIPTORS
-        for mat in ALL_MATCHERS
-        for mode in ([None] if mat in TORCH_MATCHERS or 'opencv' in mat else ['simple', 'knn'])
-        if des in get_compatible_descriptors(
-            det,
-            get_default_backend(det, 0),
-            get_default_backend(des, 1),
-        )
-        and mat in get_compatible_matchers(
-            des,
-            get_default_backend(des, 1),
-            get_default_backend(mat, 2),
-        )
-        and mat != 'superglue'
-        and f"{det}_{get_default_backend(det, 0)}".lower() in ModelWrapper._METHODS
-        and f"{des}_{get_default_backend(des, 1)}".lower() in ModelWrapper._METHODS
-        and f"{mat}_{get_default_backend(mat, 2)}".lower() in ModelWrapper._METHODS
-    ]
+    valid_combinations = []
+    for detector, det_backends_dict in DETECTOR_DESCRIPTOR_COMPATIBILITY.items():
+        for det_backend, desc_backends_dict in det_backends_dict.items():
+            for desc_backend in desc_backends_dict.keys():
+                descriptors = get_compatible_descriptors(detector, det_backend, desc_backend)
+                for descriptor in descriptors:
+                    match_backends_dict = DESCRIPTOR_MATCHER_COMPATIBILITY.get(descriptor, {})
+                    if desc_backend in match_backends_dict:
+                        for match_backend in match_backends_dict[desc_backend].keys():
+                            matchers = get_compatible_matchers(descriptor, desc_backend, match_backend)
+                            for matcher in matchers:
+                                if matcher == 'superglue':
+                                    continue
+                                modes = [None] if matcher in TORCH_MATCHERS or 'opencv' in match_backend else ['simple',
+                                                                                                                'knn']
+                                for mode in modes:
+                                    valid_combinations.append((
+                                        detector, det_backend,
+                                        descriptor, desc_backend,
+                                        matcher, match_backend,
+                                        mode
+                                    ))
 
-    @pytest.mark.parametrize("det, des, mat, mode", valid_combinations)
-    def test_known_compatible_pairs(self, det, des, mat, mode, mock_logger, load_img):
+    @pytest.mark.parametrize("det, det_backend, des, desc_backend, mat, match_backend, mode", valid_combinations)
+    def test_known_compatible_pairs(self, det, det_backend, des, desc_backend,
+                                    mat, match_backend, mode, mock_logger, load_img):
         img1 = load_img("box.png")
         img2 = load_img("box_in_scene.png")
 
-        config = {}
+        config = {
+            'detector': {'backend': det_backend},
+            'descriptor': {'backend': desc_backend},
+            'matcher': {'backend': match_backend}
+        }
         if mode is not None:
-            config = {'matcher': {'mode': mode}}
+            config['matcher']['mode'] = mode
 
         matcher_cv = FeatureMatcherCV2(
             logger=mock_logger,
@@ -185,7 +192,10 @@ class TestFeatureMatcherCompatibility:
         except Exception as e:
             pytest.fail(
                 f"FAILED COMBINATION:\n"
-                f"Detector: {det} | Descriptor: {des} | Matcher: {mat} | Mode: {mode}\n"
+                f"Detector: {det} ({det_backend}) | "
+                f"Descriptor: {des} ({desc_backend}) | "
+                f"Matcher: {mat} ({match_backend}) | "
+                f"Mode: {mode}\n"
                 f"Error: {e}"
             )
         finally:

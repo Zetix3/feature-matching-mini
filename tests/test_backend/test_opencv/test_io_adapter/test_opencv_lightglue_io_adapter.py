@@ -55,14 +55,14 @@ def test_normalize_keypoints_aliked(adapter):
 
 def test_preprocess(adapter, mock_model):
     inputs = {
-        'features1': {
+        'features0': {
             'keypoints': np.array([[0.0, 0.0]], dtype=np.float32),
             'descriptors': np.random.rand(1, 128).astype(np.float32),
             'height': 100,
             'width': 100,
             'extractor_name': 'disk_opencv'
         },
-        'features2': {
+        'features1': {
             'keypoints': np.array([[10.0, 10.0]], dtype=np.float32),
             'descriptors': np.random.rand(1, 128).astype(np.float32),
             'height': 100,
