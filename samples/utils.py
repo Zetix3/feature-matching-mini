@@ -7,11 +7,44 @@ sys.path.append(str(Path(__file__).parent.parent))  # noqa: E402
 from src.algorithms import (ALL_DETECTORS, ALL_DESCRIPTORS, ALL_MATCHERS, OPENCV_MATCHERS_MODE,  # noqa: E402
                             OPENCV_MATCHERS, TORCH_DETECTORS, TORCH_DESCRIPTORS, get_default_backend)
 
+from src.backend.executorch.model_wrapper.model_wrapper import (  # noqa: E402
+    EXECUTORCH_DESCRIPTOR_MODELS,
+    EXECUTORCH_DETECTOR_MODELS,
+    EXECUTORCH_MATCHER_MODELS,
+)
+from src.backend.opencv.model_loader.model_loader import (  # noqa: E402
+    OPENCV_DESCRIPTOR_MODELS, OPENCV_DETECTOR_MODELS, OPENCV_MATCHER_MODELS,
+)
+
+DEFAULT_MODELS_PATH = Path(__file__).resolve().parent.parent / "models"
+
+
+def configure_model_paths(args):
+    model_path = args.modelpath
+
+    if args.det_backend == 'executorch':
+        args.det_et_model = model_path / EXECUTORCH_DETECTOR_MODELS[args.detector]
+    elif args.det_backend == 'opencv' and args.detector in OPENCV_DETECTOR_MODELS:
+        setattr(args, f'{args.detector}_model_path', model_path / OPENCV_DETECTOR_MODELS[args.detector])
+
+    if args.des_backend == 'executorch':
+        args.des_et_model = model_path / EXECUTORCH_DESCRIPTOR_MODELS[args.descriptor]
+    elif args.des_backend == 'opencv' and args.descriptor in OPENCV_DESCRIPTOR_MODELS:
+        setattr(args, f'{args.descriptor}_model_path', model_path / OPENCV_DESCRIPTOR_MODELS[args.descriptor])
+
+    if args.mat_backend == 'executorch':
+        args.mat_et_model = model_path / EXECUTORCH_MATCHER_MODELS[args.descriptor]
+        args.mat_et_num_keypoints = 256
+    elif args.mat_backend == 'opencv' and args.matcher == 'lightglue':
+        args.lightglue_model_path = model_path / OPENCV_MATCHER_MODELS[args.descriptor]
+
 
 def build_detector_config(args):
     config = dict()
     if (args.device is not None) and (args.detector in TORCH_DETECTORS):
         config['device'] = args.device
+    if args.modelpath is not None:
+        config['modelpath'] = args.modelpath
     if args.provider_option:
         config['provider_option'] = args.provider_option
     if args.intra_op_threads is not None:
@@ -45,6 +78,8 @@ def build_descriptor_config(args):
     config = dict()
     if (args.device is not None) and (args.descriptor in TORCH_DESCRIPTORS or args.descriptor in ['tfeat', 'hardnet']):
         config['device'] = args.device
+    if args.modelpath is not None:
+        config['modelpath'] = args.modelpath
     if args.provider_option:
         config['provider_option'] = args.provider_option
     if args.intra_op_threads is not None:
@@ -87,6 +122,8 @@ def build_matcher_config(args):
     matcher_backend = args.mat_backend or get_default_backend(args.matcher, 2)
     if args.device is not None and matcher_backend == 'torch':
         config['device'] = args.device
+    if args.modelpath is not None:
+        config['modelpath'] = args.modelpath
     if args.mat_backend is not None:
         config['backend'] = args.mat_backend
     if matcher_backend == 'opencv':
@@ -150,6 +187,9 @@ def performance_tests_parser():
                             help='Path to the first image')
     arg_parser.add_argument('-i2', '--image2', type=Path, required=True,
                             help='Path to the second image')
+
+    arg_parser.add_argument('-mp', '--modelpath', type=Path, default=DEFAULT_MODELS_PATH,
+                            help='Path to models')
 
     arg_parser.add_argument('-d', '--device', type=str, default=None,
                             help='The device on which the script will be run')

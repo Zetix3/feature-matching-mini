@@ -11,7 +11,7 @@ from src.detectors import Detector  # noqa: E402, F401
 from src.descriptors import Descriptor  # noqa: E402, F401
 from src.matchers import Matcher, OpenCVMatcher  # noqa: E402, F401
 from src.feature_matcher import FeatureMatcherCV2  # noqa: E402, F401
-from samples.utils import build_feature_matcher_config  # noqa: E402, F401
+from samples.utils import build_feature_matcher_config, configure_model_paths  # noqa: E402, F401
 import src.backend.opencv.model_loader  # noqa: E402, F401
 import src.backend.opencv.inference_api  # noqa: E402, F401
 import src.backend.opencv.io_adapter  # noqa: E402, F401
@@ -22,6 +22,8 @@ import src.backend.onnx.io_adapter  # noqa: E402, F401
 
 logging.basicConfig(level=logging.INFO, format='[ %(levelname)s ] %(message)s')
 logger = logging.getLogger("CV_Sample")
+
+DEFAULT_MODELS_PATH = Path(__file__).resolve().parent.parent / "models"
 
 
 def parser():
@@ -40,6 +42,9 @@ def parser():
                             help='Path to the first image')
     arg_parser.add_argument('-i2', '--image2', type=Path, required=True,
                             help='Path to the second image')
+
+    arg_parser.add_argument('-mp', '--modelpath', type=Path, default=DEFAULT_MODELS_PATH,
+                            help='Path to models')
 
     arg_parser.add_argument('-d', '--device', type=str, default=None,
                             help='The device on which the script will be run')
@@ -128,7 +133,7 @@ def main():
         if not args.image1.exists() or not args.image2.exists():
             logger.error(f"One of the images does not exist: {args.image1} or {args.image2}")
             return 1
-
+        configure_model_paths(args)
         logger.info("Starting Feature Matching Pipeline")
         logger.info(f"Comparing pair: {args.image1} and {args.image2}")
 
