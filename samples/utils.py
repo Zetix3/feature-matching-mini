@@ -5,7 +5,8 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))  # noqa: E402
 
 from src.algorithms import (ALL_DETECTORS, ALL_DESCRIPTORS, ALL_MATCHERS, OPENCV_MATCHERS_MODE,  # noqa: E402
-                            OPENCV_MATCHERS, TORCH_DETECTORS, TORCH_DESCRIPTORS, get_default_backend)
+                            OPENCV_MATCHERS, OPENCV_DNN_MATCHERS, TORCH_DETECTORS,
+                            TORCH_DESCRIPTORS, get_default_backend)
 
 from src.backend.executorch.model_wrapper.model_wrapper import (  # noqa: E402
     EXECUTORCH_DESCRIPTOR_MODELS,
@@ -16,27 +17,31 @@ from src.backend.opencv.model_loader.model_loader import (  # noqa: E402
     OPENCV_DESCRIPTOR_MODELS, OPENCV_DETECTOR_MODELS, OPENCV_MATCHER_MODELS,
 )
 
-DEFAULT_MODELS_PATH = Path(__file__).resolve().parent.parent / "models"
-
 
 def configure_model_paths(args):
     model_path = args.modelpath
 
-    if args.det_backend == 'executorch':
+    if args.det_backend == 'executorch' and args.det_et_model is None:
         args.det_et_model = model_path / EXECUTORCH_DETECTOR_MODELS[args.detector]
-    elif args.det_backend == 'opencv' and args.detector in OPENCV_DETECTOR_MODELS:
-        setattr(args, f'{args.detector}_model_path', model_path / OPENCV_DETECTOR_MODELS[args.detector])
+    elif args.det_backend in ['opencv', 'onnx'] and args.detector in OPENCV_DETECTOR_MODELS:
+        attr_name = f'{args.detector}_model_path'
+        if getattr(args, attr_name, None) is None:
+            setattr(args, attr_name, model_path / OPENCV_DETECTOR_MODELS[args.detector])
 
-    if args.des_backend == 'executorch':
+    if args.des_backend == 'executorch' and args.des_et_model is None:
         args.des_et_model = model_path / EXECUTORCH_DESCRIPTOR_MODELS[args.descriptor]
-    elif args.des_backend == 'opencv' and args.descriptor in OPENCV_DESCRIPTOR_MODELS:
-        setattr(args, f'{args.descriptor}_model_path', model_path / OPENCV_DESCRIPTOR_MODELS[args.descriptor])
+    elif args.des_backend in ['opencv', 'onnx'] and args.descriptor in OPENCV_DESCRIPTOR_MODELS:
+        attr_name = f'{args.descriptor}_model_path'
+        if getattr(args, attr_name, None) is None:
+            setattr(args, attr_name, model_path / OPENCV_DESCRIPTOR_MODELS[args.descriptor])
 
-    if args.mat_backend == 'executorch':
+    if args.mat_backend == 'executorch' and args.mat_et_model is None:
         args.mat_et_model = model_path / EXECUTORCH_MATCHER_MODELS[args.descriptor]
         args.mat_et_num_keypoints = 256
-    elif args.mat_backend == 'opencv' and args.matcher == 'lightglue':
-        args.lightglue_model_path = model_path / OPENCV_MATCHER_MODELS[args.descriptor]
+    elif args.mat_backend in ['opencv', 'onnx'] and args.matcher in OPENCV_DNN_MATCHERS:
+        attr_name = f'{args.matcher}_model_path'
+        if getattr(args, attr_name, None) is None:
+            setattr(args, attr_name, model_path / OPENCV_MATCHER_MODELS[args.descriptor])
 
 
 def build_detector_config(args):
@@ -188,7 +193,7 @@ def performance_tests_parser():
     arg_parser.add_argument('-i2', '--image2', type=Path, required=True,
                             help='Path to the second image')
 
-    arg_parser.add_argument('-mp', '--modelpath', type=Path, default=DEFAULT_MODELS_PATH,
+    arg_parser.add_argument('-mp', '--modelpath', type=Path, default=Path("models"),
                             help='Path to models')
 
     arg_parser.add_argument('-d', '--device', type=str, default=None,

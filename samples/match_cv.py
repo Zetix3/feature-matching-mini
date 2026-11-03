@@ -23,8 +23,6 @@ import src.backend.onnx.io_adapter  # noqa: E402, F401
 logging.basicConfig(level=logging.INFO, format='[ %(levelname)s ] %(message)s')
 logger = logging.getLogger("CV_Sample")
 
-DEFAULT_MODELS_PATH = Path(__file__).resolve().parent.parent / "models"
-
 
 def parser():
     arg_parser = argparse.ArgumentParser(
@@ -43,7 +41,7 @@ def parser():
     arg_parser.add_argument('-i2', '--image2', type=Path, required=True,
                             help='Path to the second image')
 
-    arg_parser.add_argument('-mp', '--modelpath', type=Path, default=DEFAULT_MODELS_PATH,
+    arg_parser.add_argument('-mp', '--modelpath', type=Path, default=Path("models"),
                             help='Path to models')
 
     arg_parser.add_argument('-d', '--device', type=str, default=None,

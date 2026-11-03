@@ -15,8 +15,6 @@ from src.algorithms import (DETECTOR_DESCRIPTOR_COMPATIBILITY, DESCRIPTOR_MATCHE
 logging.basicConfig(level=logging.INFO, format='[ %(levelname)s ] %(message)s')
 logger = logging.getLogger("PerformanceBenchmark")
 
-DEFAULT_MODELS_PATH = Path(__file__).resolve().parent.parent / "models"
-
 
 def parse_performance_log(log_output, script_type):
     results = {}
@@ -216,7 +214,7 @@ def parse_args():
     parser.add_argument('-i2', '--image2', type=Path, required=True,
                         help='Path to the second image')
 
-    parser.add_argument('-mp', '--modelpath', type=Path, default=DEFAULT_MODELS_PATH,
+    parser.add_argument('-mp', '--modelpath', type=Path, default=Path("models"),
                         help='Path to models')
 
     parser.add_argument('-o', '--output', type=Path, default=Path('benchmark_results.csv'),
