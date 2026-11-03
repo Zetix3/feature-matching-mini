@@ -11,3 +11,5 @@ matplotlib
 einops
 loguru
 yacs
+kornia==0.8.2
+onnxruntime

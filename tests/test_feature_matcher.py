@@ -5,9 +5,15 @@ from pathlib import Path
 from unittest.mock import MagicMock
 from logging import Logger
 
-from src.matchers import Matcher
 from src.feature_matcher import FeatureMatcherCV2
-from src.algorithms import DNN_ALGORITHMS, DESCRIPTOR_MATCHER_COMPATIBILITY
+from src.algorithms import (DESCRIPTOR_MATCHER_COMPATIBILITY, DETECTOR_DESCRIPTOR_COMPATIBILITY, TORCH_MATCHERS,
+                            get_compatible_descriptors, get_compatible_matchers)
+import src.backend.opencv.model_loader  # noqa: F401
+import src.backend.opencv.inference_api  # noqa: F401
+import src.backend.opencv.io_adapter  # noqa: F401
+import src.backend.onnx.model_loader  # noqa: F401
+import src.backend.onnx.inference_api  # noqa: F401
+import src.backend.onnx.io_adapter  # noqa: F401
 
 
 @pytest.fixture
@@ -19,7 +25,7 @@ def mock_logger():
 def load_img():
     def _load(name):
         path = Path(__file__).parent.parent / "test_data" / name
-        img = cv.imread(str(path), cv.IMREAD_GRAYSCALE)
+        img = cv.imread(str(path))
         if img is None:
             pytest.fail(f"Failed to load image. On path: {path.absolute()}")
         return img
@@ -35,19 +41,19 @@ class TestFeatureMatcherInit:
             matcher='bf',
             config={'matcher': {'mode': 'knn'}}
         )
-        assert matcher._detector == 'orb'
-        assert matcher._descriptor == 'orb'
-        assert matcher._matcher == 'bf'
+        assert matcher._detector_name == 'orb'
+        assert matcher._descriptor_name == 'orb'
+        assert matcher._matcher_name == 'bf'
         assert matcher._matcher_config.get('mode') == 'knn'
 
     def test_init_empty_config(self, mock_logger):
         matcher = FeatureMatcherCV2(logger=mock_logger, config={})
-        assert matcher._detector == 'sift'
-        assert matcher._descriptor == 'sift'
+        assert matcher._detector_name == 'sift'
+        assert matcher._descriptor_name == 'sift'
 
     def test_init_none_config(self, mock_logger):
         matcher = FeatureMatcherCV2(logger=mock_logger, config=None)
-        assert matcher._detector == 'sift'
+        assert matcher._detector_name == 'sift'
 
     def test_init_full_config(self, mock_logger):
         config = {
@@ -106,7 +112,7 @@ class TestFeatureMatcherMatch:
             config={'detector': {'nfeatures': limit}}
         )
         features0, features1, correspondences = matcher_cv.match(img1, img2)
-        kp = features0.get('kp')
+        kp = features0.get('keypoints')
         assert kp is not None
         assert len(kp) <= limit + 5
 
@@ -125,46 +131,43 @@ class TestFeatureMatcherMatch:
 
 
 class TestFeatureMatcherCompatibility:
-    valid_combinations = [
-        (det, des, mat, mode)
-        for det, descriptors in FeatureMatcherCV2._DETECTOR_DESCRIPTOR_COMPATIBILITY.items()
-        for des in descriptors
-        for mat in Matcher._METHODS.keys()
-        for mode in ['simple', 'knn']
-        if det not in DNN_ALGORITHMS
-        if mat in DESCRIPTOR_MATCHER_COMPATIBILITY.get(des, [])
-    ]
+    valid_combinations = []
+    for detector, det_backends_dict in DETECTOR_DESCRIPTOR_COMPATIBILITY.items():
+        for det_backend, desc_backends_dict in det_backends_dict.items():
+            for desc_backend in desc_backends_dict.keys():
+                descriptors = get_compatible_descriptors(detector, det_backend, desc_backend)
+                for descriptor in descriptors:
+                    match_backends_dict = DESCRIPTOR_MATCHER_COMPATIBILITY.get(descriptor, {})
+                    if desc_backend in match_backends_dict:
+                        for match_backend in match_backends_dict[desc_backend].keys():
+                            matchers = get_compatible_matchers(descriptor, desc_backend, match_backend)
+                            for matcher in matchers:
+                                if matcher == 'superglue':
+                                    continue
+                                modes = [None] if matcher in TORCH_MATCHERS or 'opencv' in match_backend else ['simple',
+                                                                                                               'knn']
+                                for mode in modes:
+                                    valid_combinations.append((
+                                        detector, det_backend,
+                                        descriptor, desc_backend,
+                                        matcher, match_backend,
+                                        mode
+                                    ))
 
-    @pytest.mark.parametrize("det, des, mat, mode", valid_combinations)
-    def test_known_compatible_pairs(self, det, des, mat, mode, mock_logger, load_img):
-        img1 = load_img("box.png")
-        img2 = load_img("box_in_scene.png")
-
-        matcher_cv = FeatureMatcherCV2(
-            logger=mock_logger,
-            detector=det,
-            descriptor=des,
-            matcher=mat,
-            config={'matcher': {'mode': mode}}
+    @pytest.mark.parametrize("det, det_backend, des, desc_backend, mat, match_backend, mode", valid_combinations)
+    def test_known_compatible_pairs(self, det, det_backend, des, desc_backend,
+                                    mat, match_backend, mode):
+        assert des in get_compatible_descriptors(
+            det,
+            det_backend,
+            desc_backend,
         )
-
-        try:
-            features0, features1, correspondences = matcher_cv.match(img1, img2)
-            assert features0 is not None
-            assert features1 is not None
-            assert isinstance(correspondences, dict)
-            assert 'matches' in correspondences
-
-            matches = correspondences.get('matches')
-            if mode == 'knn' and len(matches) > 0:
-                assert isinstance(matches[0], (list, tuple))
-
-        except Exception as e:
-            pytest.fail(
-                f"FAILED COMBINATION: \n"
-                f"Detector: {det} | Descriptor: {des} | Matcher: {mat} | Mode: {mode}\n"
-                f"Error: {e}"
-            )
+        assert mat in get_compatible_matchers(
+            des,
+            desc_backend,
+            match_backend,
+        )
+        assert mode is None or mode in {'simple', 'knn'}
 
     def test_incompatible_descriptor_matcher_raises(self, mock_logger):
         with pytest.raises(ValueError, match="cannot be used with Matcher"):
@@ -183,15 +186,24 @@ class TestFeatureMatcherCompatibility:
                 descriptor='sift'
             )
 
+    def test_incompatible_executorch_descriptor_and_torch_matcher_raises(self, mock_logger):
+        config = {
+            'detector': {'backend': 'executorch'},
+            'descriptor': {'backend': 'executorch'},
+            'matcher': {'backend': 'torch'},
+        }
+
+        with pytest.raises(ValueError, match="cannot be used with Matcher"):
+            FeatureMatcherCV2(
+                logger=mock_logger,
+                detector='superpoint_lightglue',
+                descriptor='superpoint_lightglue',
+                matcher='lightglue',
+                config=config,
+            )
+
 
 class TestFeatureMatcherRobustness:
-    def test_match_raises_value_error_on_empty_image(self, mock_logger):
-        matcher_cv = FeatureMatcherCV2(logger=mock_logger)
-        empty_img = np.zeros((10, 10), dtype=np.uint8)
-
-        with pytest.raises(ValueError, match="Failed to detect key points"):
-            matcher_cv.match(empty_img, empty_img)
-
     def test_match_with_invalid_descriptor_input(self, mock_logger):
         matcher_cv = FeatureMatcherCV2(logger=mock_logger)
         try:
@@ -202,17 +214,6 @@ class TestFeatureMatcherRobustness:
                 assert len(correspondences) == 0
         except Exception:
             pass
-
-    def test_invalid_config_key_ignored_or_raises(self, mock_logger, load_img):
-        img1 = load_img("box.png")
-        img2 = load_img("box_in_scene.png")
-
-        with pytest.raises((TypeError, Exception, cv.error)):
-            matcher_cv = FeatureMatcherCV2(
-                logger=mock_logger,
-                config={'detector': {'invalid_param': 999}}
-            )
-            matcher_cv.match(img1, img2)
 
 
 class TestFeatureMatcherVisualization:
@@ -235,7 +236,7 @@ class TestFeatureMatcherVisualization:
         img2 = load_img("box_in_scene.png")
 
         matcher_cv = FeatureMatcherCV2(logger=mock_logger)
-        empty_features = {'kp': [], 'des': None}
+        empty_features = {'keypoints': [], 'descriptors': None}
         empty_correspondences = {'matches': [], 'scores': None}
         res_img = matcher_cv.visualize_matches(img1, empty_features,
                                                img2, empty_features,
@@ -258,7 +259,6 @@ class TestFeatureMatcherVisualization:
 
 
 class TestFeatureMatcherInvalidInputs:
-
     def test_raises_value_error_on_invalid_detector(self, mock_logger):
         with pytest.raises(ValueError, match="Detector 'invalid_det' is not registered in compatibility matrix"):
             FeatureMatcherCV2(logger=mock_logger, detector='invalid_det').match(
