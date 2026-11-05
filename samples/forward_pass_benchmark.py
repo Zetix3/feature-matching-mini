@@ -6,24 +6,15 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))  # noqa: E402
 
-from src.algorithms import (DNN_DETECTORS, DNN_DESCRIPTORS, DNN_MATCHERS, OPENCV_DESCRIPTORS,  # noqa: E402
-                            DESCRIPTOR_MATCHER_COMPATIBILITY)
-from src.detectors import Detector  # noqa: E402
+from src.algorithms import (DNN_DETECTORS, DNN_DESCRIPTORS, DNN_MATCHERS,  # noqa: E402
+                            DESCRIPTOR_MATCHER_COMPATIBILITY, get_compatible_matchers)
+from src.backend.model_wrapper_base import ModelWrapper  # noqa: E402
 from src.descriptors import Descriptor  # noqa: E402
-from src.matchers import Matcher  # noqa: E402
-from src.super_point import SuperPoint  # noqa: E402, F401
-from src.lightglue_matcher import LightGlue  # noqa: E402, F401
-from src.lightglue_pipeline import LightGlueFeatureExtractor  # noqa: E402, F401
-from src.opencv_dnn_extractors import ALIKEDOpenCV, DISKOpenCV  # noqa: E402, F401
-from src.opencv_dnn_matchers import LightGlueOpenCVMatcher  # noqa: E402, F401
+from src.dnn_extractors import DNNFeatureExtractors  # noqa: E402, F401
+from src.dnn_matchers import DNNMatcher  # noqa: E402, F401
+from src.dnn_pipeline import DNNPipeline  # noqa: E402, F401
 from src.tfeat_descriptor import TFeat  # noqa: E402, F401
 from src.hardnet_descriptor import HardNet  # noqa: E402, F401
-from src.xfeat import XFeat  # noqa: E402, F401
-from src.super_glue import SuperGlueMatcher  # noqa: E402, F401
-from src.d2net import D2Net  # noqa: E402, F401
-from src.r2d2 import R2D2  # noqa: E402, F401
-from src.loftr import LoFTR  # noqa: E402, F401
-from src.roma import RoMa  # noqa: E402, F401
 from samples.forward_profiler import ForwardProfiler  # noqa: E402
 
 
@@ -70,31 +61,6 @@ def parser():
     return arg_parser.parse_args()
 
 
-def get_first_compatible_descriptor(matcher_name):
-    for desc, matchers in DESCRIPTOR_MATCHER_COMPATIBILITY.items():
-        if matcher_name in matchers:
-            return desc
-    raise ValueError(f"No compatible descriptor found for matcher '{matcher_name}'")
-
-
-def get_model(model_wrapper):
-    if hasattr(model_wrapper, '_matcher'):
-        net = model_wrapper._matcher
-    elif hasattr(model_wrapper, '_extractor'):
-        net = model_wrapper._extractor
-    elif hasattr(model_wrapper, 'model'):
-        net = model_wrapper.model
-    elif hasattr(model_wrapper, '_model'):
-        net = model_wrapper._model
-    else:
-        net = model_wrapper
-
-    if hasattr(net, 'net') and isinstance(net.net, torch.nn.Module):
-        return net.net
-
-    return net
-
-
 def opencv_benchmark(profiler, modelpath, save_path):
     results = profiler.profile_opencv_dnn(modelpath, save_path)
     logger.info(f"Forward Time: {results['total_time_ms']:.2f} ms")
@@ -117,29 +83,40 @@ def executorch_benchmark(profiler, modelpath, save_path, debug_buffer_size):
     return results
 
 
+def get_first_compatible_descriptor(matcher_name):
+    for descriptor, desc_backends_dict in DESCRIPTOR_MATCHER_COMPATIBILITY.items():
+        for desc_backend, match_backends_dict in desc_backends_dict.items():
+            for match_backend in match_backends_dict.keys():
+                matchers = get_compatible_matchers(descriptor, desc_backend, match_backend)
+                if matcher_name in matchers:
+                    return descriptor
+    raise ValueError(f"No compatible descriptor found for matcher '{matcher_name}'")
+
+
+def get_model(model_wrapper):
+    net = model_wrapper
+    if hasattr(net, 'net') and isinstance(net.net, torch.nn.Module):
+        return net.net
+
+    return net
+
 def pytorch_benchmark(profiler, model_name, device, save_path, use_dict):
-    config = {'detector': {}, 'descriptor': {}, 'matcher': {'mode': 'simple'}, 'preprocessor': {}}
-    if model_name in DNN_DETECTORS:
-        model_wrapper = Detector.create(detector_name=model_name, logger=logger,
-                                        config=config)
-
-    elif model_name in DNN_DESCRIPTORS or model_name in OPENCV_DESCRIPTORS:
-        model_wrapper = Descriptor.create(descriptor_name=model_name, logger=logger,
-                                          config=config)
-
+    config = {'detector': {}, 'descriptor': {}, 'matcher': {'mode': 'simple'}, 'backend': 'torch', 'preprocessor': {}}
+    if model_name in DNN_DETECTORS or model_name in DNN_DESCRIPTORS:
+        model_wrapper = ModelWrapper.create(backend='torch', model_name=model_name, config=config, logger=logger)
     elif model_name in DNN_MATCHERS:
-        compatible_desc_name = get_first_compatible_descriptor(model_name)
-        desc_obj = Descriptor.create(descriptor_name=compatible_desc_name, logger=logger,
-                                     config=config)
-        model_wrapper = Matcher.create(matcher_name=model_name, descriptor_name=desc_obj,
-                                       logger=logger, config=config)
-
+        first_descriptor = get_first_compatible_descriptor(model_name)
+        model_descriptor = Descriptor.create(descriptor_name=first_descriptor, logger=logger,
+                                          config=config)
+        config['descriptor_class'] = model_descriptor
+        model_wrapper = ModelWrapper.create(backend='torch', model_name=model_name, config=config, logger=logger)
     else:
         raise ValueError(
             f"Model '{model_name}' is not supported on PyTorch platform. "
         )
 
-    model = get_model(model_wrapper)
+    components = model_wrapper.load()
+    model = get_model(components['model'])
     results = profiler.profile_pytorch(
         model=model,
         model_name=model_name,
