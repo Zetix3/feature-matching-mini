@@ -7,6 +7,8 @@ import pandas as pd
 from pathlib import Path
 from torch.profiler import profile, record_function, ProfilerActivity
 from executorch.runtime import Runtime
+import onnxruntime as ort
+from src.backend.onnx.onnx_utils import OnnxSessionConfiguration
 
 
 logging.basicConfig(level=logging.INFO, format='[ %(levelname)s ] %(message)s')
@@ -134,6 +136,58 @@ class ForwardProfiler:
         return {
             "total_time_ms": total_time_ms,
             "layers_profile": significant_layers
+        }
+
+    def profile_onnx(self, model_path, save_path, config):
+        session_config = OnnxSessionConfiguration(logger, config)
+        sess_options = session_config.set_session_options()
+        providers = session_config.get_providers_with_options()
+
+        session_config.sess_options.enable_profiling = True
+        session = ort.InferenceSession(
+            model_path,
+            sess_options=sess_options,
+            providers=providers
+        )
+
+        input_names = [input.name for input in session.get_inputs()]
+
+        if len(input_names) != len(self.input_shape_list):
+            raise ValueError(
+                f"Mismatch: Model expects {len(input_names)} inputs ({input_names}), "
+                f"but {len(self.input_shape_list)} shapes provided via --shape."
+            )
+
+        ort_inputs = {}
+        for i, name in enumerate(input_names):
+            shape = self.input_shape_list[i]
+            data = np.random.randn(*shape).astype(np.float32)
+            ort_inputs[name] = data
+
+        for _ in range(self.warmup):
+            session.run(None, ort_inputs)
+
+        start = time.perf_counter()
+        for _ in range(self.iterations):
+            session.run(None, ort_inputs)
+        end = time.perf_counter()
+
+        total_time_ms = ((end - start) / self.iterations) * 1000
+
+        save_path.mkdir(parents=True, exist_ok=True)
+        profile_file = session.end_profiling()
+
+        profile_path_src = Path(profile_file)
+        model_stem = Path(model_path).stem
+        target_profile_path = str(save_path / f"{model_stem}_ort_profile.json")
+
+        if profile_path_src.exists():
+            profile_path_src.rename(target_profile_path)
+            logger.info(f"ONNX Runtime profile trace saved to {target_profile_path}")
+
+        return {
+            "total_time_ms": total_time_ms,
+            "trace_file": str(target_profile_path)
         }
 
     def profile_executorch(self, model_path, save_path, debug_buffer_size):
