@@ -21,24 +21,30 @@ from src.backend.opencv.model_loader.model_loader import (  # noqa: E402
 def configure_model_paths(args):
     model_path = args.modelpath
 
-    if args.det_backend == 'executorch' and args.det_et_model is None:
+    det_backend = getattr(args, 'det_backend', None)
+    det_et_model = getattr(args, 'det_et_model', None)
+    if det_backend == 'executorch' and det_et_model is None:
         args.det_et_model = model_path / EXECUTORCH_DETECTOR_MODELS[args.detector]
-    elif args.det_backend in ['opencv', 'onnx'] and args.detector in OPENCV_DETECTOR_MODELS:
+    elif det_backend in ['opencv', 'onnx'] and args.detector in OPENCV_DETECTOR_MODELS:
         attr_name = f'{args.detector}_model_path'
         if getattr(args, attr_name, None) is None:
             setattr(args, attr_name, model_path / OPENCV_DETECTOR_MODELS[args.detector])
 
-    if args.des_backend == 'executorch' and args.des_et_model is None:
+    des_backend = getattr(args, 'des_backend', None)
+    des_et_model = getattr(args, 'des_et_model', None)
+    if des_backend == 'executorch' and des_et_model is None:
         args.des_et_model = model_path / EXECUTORCH_DESCRIPTOR_MODELS[args.descriptor]
-    elif args.des_backend in ['opencv', 'onnx'] and args.descriptor in OPENCV_DESCRIPTOR_MODELS:
+    elif des_backend in ['opencv', 'onnx'] and args.descriptor in OPENCV_DESCRIPTOR_MODELS:
         attr_name = f'{args.descriptor}_model_path'
         if getattr(args, attr_name, None) is None:
             setattr(args, attr_name, model_path / OPENCV_DESCRIPTOR_MODELS[args.descriptor])
 
-    if args.mat_backend == 'executorch' and args.mat_et_model is None:
+    mat_backend = getattr(args, 'mat_backend', None)
+    mat_et_model = getattr(args, 'mat_et_model', None)
+    if mat_backend == 'executorch' and mat_et_model is None:
         args.mat_et_model = model_path / EXECUTORCH_MATCHER_MODELS[args.descriptor]
         args.mat_et_num_keypoints = 256
-    elif args.mat_backend in ['opencv', 'onnx'] and args.matcher in OPENCV_DNN_MATCHERS:
+    elif mat_backend in ['opencv', 'onnx'] and args.matcher in OPENCV_DNN_MATCHERS:
         attr_name = f'{args.matcher}_model_path'
         if getattr(args, attr_name, None) is None:
             setattr(args, attr_name, model_path / OPENCV_MATCHER_MODELS[args.descriptor])
